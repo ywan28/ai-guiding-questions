@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AI Guiding Questions Generator</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 40px;
+      max-width: 700px;
+      margin: auto;
+    }
+
+    textarea, input, select {
+      width: 100%;
+      margin-bottom: 20px;
+      font-size: 16px;
+    }
+
+    textarea {
+      height: 320px;
+      font-size: 15px;
+      line-height: 1.4;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+    }
+
+    #output {
+      margin-top: 20px;
+      white-space: pre-wrap;
+      border: 1px solid #ccc;
+      padding: 15px;
+      border-radius: 8px;
+      background: #f9f9f9;
+    }
+
+    .slider-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 14px;
+      margin-top: -10px;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>AI Guiding Questions Generator</h1>
+  <p>Paste your text or upload a PDF, then customize the questions below:</p>
+
+  <textarea id="inputText" placeholder="Paste text here..."></textarea>
+
+  <label for="pdfInput">Or upload a PDF file:</label>
+  <input type="file" id="pdfInput" accept="application/pdf">
+
+  <label for="numQuestions">Number of questions (1–10):</label>
+  <input type="number" id="numQuestions" min="1" max="10" value="5">
+
+  <label for="complexityRange">Question Complexity:</label>
+  <input type="range" id="complexityRange" min="0" max="5" value="2">
+  <div class="slider-labels">
+    <span>Straightforward</span>
+    <span>Basic</span>
+    <span>Amateur</span>
+    <span>Moderate</span>
+    <span>Advanced</span>
+    <span>Sophisticated</span>
+  </div>
+
+  <button onclick="generateQuestions()">Generate Questions</button>
+  <div id="output"></div>
+
+  <script>
+    async function generateQuestions() {
+      const text = document.getElementById('inputText').value;
+      const numQuestions = parseInt(document.getElementById('numQuestions').value);
+      const complexityLevel = parseInt(document.getElementById('complexityRange').value);
+
+      const response = await fetch('/generate', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          text,
+          numQuestions,
+          complexityLevel
+        })
+      });
+
+      const data = await response.json();
+      document.getElementById('output').textContent = data.questions;
+    }
+
+    document.getElementById('pdfInput').addEventListener('change', async function() {
+      const file = this.files[0];
+      if (!file) return;
+
+      const formData = new FormData();
+      formData.append("pdf", file);
+
+      const response = await fetch('/upload-pdf', {
+        method: 'POST',
+        body: formData
+      });
+
+      const data = await response.json();
+      if (data.text) {
+        document.getElementById('inputText').value = data.text;
+      } else {
+        alert("Failed to extract text from PDF.");
+      }
+    });
+  </script>
+</body>
+</html>
